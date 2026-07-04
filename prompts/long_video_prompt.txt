@@ -1,0 +1,27 @@
+Create a professional Hindi Hinglish YouTube Script.
+
+Duration:
+
+5 to 8 Minutes.
+
+Structure:
+
+Powerful Hook
+
+Problem
+
+Explanation
+
+Storytelling
+
+Examples
+
+Actionable Advice
+
+Summary
+
+Call To Action
+
+Do not use markdown.
+
+Only return the script.

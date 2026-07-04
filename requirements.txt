@@ -1,0 +1,6 @@
+google-genai
+python-dotenv
+notion-client
+requests
+rich
+feedparser
