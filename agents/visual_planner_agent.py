@@ -27,33 +27,26 @@ SCRIPT
 
         scenes = SceneParser.parse(response)
 
-        # ✅ FIX: duration balancing layer
-        scenes = self._balance_duration(
-            scenes,
-            getattr(content, "video_type", "Shorts")
+        # Total video duration must always equal the actual narration
+        # duration, never a hardcoded Shorts/Long Video guess.
+        total_duration = getattr(content, "audio_duration", 0) or (
+            60 if getattr(content, "content_type", "Shorts").lower() == "shorts" else 180
         )
+
+        scenes = self._balance_duration(scenes, total_duration)
 
         return scenes
 
     # --------------------------------------
-    # DURATION ENGINE (FIX 34 sec BUG)
+    # DURATION ENGINE (scenes sum to narration duration)
     # --------------------------------------
 
-    def _balance_duration(self, scenes, video_type):
+    def _balance_duration(self, scenes, total_duration):
 
         if not scenes:
             return scenes
 
-        # Total duration
-        if video_type.lower() == "shorts":
-            total = 60
-        else:
-            total = 180
-
         n = len(scenes)
-
-        if n == 0:
-            return scenes
 
         # Weights system
         weights = []
@@ -69,15 +62,28 @@ SCRIPT
 
         total_weight = sum(weights)
 
+        allocated = 0.0
+
         for i, scene in enumerate(scenes):
 
             ratio = weights[i] / total_weight
 
-            duration = int(total * ratio)
+            duration = max(3.0, total_duration * ratio)
 
-            # Safety clamp
-            duration = max(3, min(duration, 12))
+            scene.duration = round(duration, 2)
 
-            scene.duration = duration
+            allocated += scene.duration
+
+        # Correct rounding drift on the last scene so the sum of
+        # scene durations matches the narration duration exactly
+        drift = total_duration - allocated
+
+        scenes[-1].duration = round(
+
+            max(3.0, scenes[-1].duration + drift),
+
+            2
+
+        )
 
         return scenes

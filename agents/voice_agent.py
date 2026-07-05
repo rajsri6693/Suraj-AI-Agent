@@ -1,6 +1,7 @@
 import os
 
 from services.voice_service import VoiceService
+from services.ffmpeg_service import FFmpegService
 
 
 class VoiceAgent:
@@ -8,6 +9,8 @@ class VoiceAgent:
     def __init__(self):
 
         self.voice_service = VoiceService()
+
+        self.ffmpeg = FFmpegService()
 
     def generate(self, content):
 
@@ -46,6 +49,10 @@ class VoiceAgent:
             )
 
         content.audio_path = audio_path
+
+        content.audio_duration = self.ffmpeg.get_duration(audio_path)
+
+        print("Narration Duration :", content.audio_duration)
 
         print("✅ Voice Generated")
 

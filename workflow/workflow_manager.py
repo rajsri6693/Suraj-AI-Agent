@@ -8,6 +8,8 @@ from agents.thumbnail_agent import ThumbnailAgent
 from services.youtube_service import YouTubeService
 from services.telegram_service import TelegramService
 
+from core.quality_engine import QualityEngine
+
 
 class WorkflowManager:
 
@@ -20,6 +22,8 @@ class WorkflowManager:
     ):
 
         self.notion = notion_service
+
+        self.quality_engine = QualityEngine()
 
         self.voice_agent = VoiceAgent()
 
@@ -84,6 +88,18 @@ class WorkflowManager:
         print("===================================")
 
         print()
+
+        # ---------------------------------
+
+        # Approved Narration
+        # Strip any inline visual/scene-cue tags (e.g. "[investor
+        # panic]") left in the approved script. These are editorial
+        # hints for reviewing the script in Notion, not narration -
+        # Voice, Subtitle and Video must only ever see clean text.
+
+        # ---------------------------------
+
+        content.script = self.quality_engine.process(content.script)
 
         # ---------------------------------
 

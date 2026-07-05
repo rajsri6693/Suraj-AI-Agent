@@ -10,6 +10,8 @@ class FFmpegService:
 
         self.ffmpeg = Config.FFMPEG_PATH
 
+        self.ffprobe = Config.FFPROBE_PATH
+
     # ---------------------------------
     # Run FFmpeg Command
     # ---------------------------------
@@ -24,6 +26,106 @@ class FFmpegService:
             command,
             check=True
         )
+
+    # ---------------------------------
+    # Get Media Duration (ffprobe)
+    # ---------------------------------
+
+    def get_duration(self, path):
+
+        command = [
+
+            self.ffprobe,
+
+            "-v",
+
+            "error",
+
+            "-show_entries",
+
+            "format=duration",
+
+            "-of",
+
+            "default=noprint_wrappers=1:nokey=1",
+
+            path
+
+        ]
+
+        result = subprocess.run(
+
+            command,
+
+            check=True,
+
+            capture_output=True,
+
+            text=True
+
+        )
+
+        return float(result.stdout.strip())
+
+    # ---------------------------------
+    # Extend Last Frame (freeze-pad)
+    # ---------------------------------
+
+    def extend_last_frame(
+
+        self,
+
+        input_video,
+
+        output_video,
+
+        extra_seconds
+
+    ):
+
+        os.makedirs(
+
+            os.path.dirname(output_video),
+
+            exist_ok=True
+
+        )
+
+        command = [
+
+            self.ffmpeg,
+
+            "-y",
+
+            "-i",
+
+            input_video,
+
+            "-vf",
+
+            f"tpad=stop_mode=clone:stop_duration={extra_seconds}",
+
+            "-c:v",
+
+            Config.VIDEO_CODEC,
+
+            "-preset",
+
+            Config.VIDEO_PRESET,
+
+            "-pix_fmt",
+
+            Config.PIXEL_FORMAT,
+
+            "-an",
+
+            output_video
+
+        ]
+
+        self._run(command)
+
+        return output_video
 
     # ---------------------------------
     # Normalize + Trim
@@ -190,7 +292,9 @@ class FFmpegService:
 
         audio_file,
 
-        output_video
+        output_video,
+
+        duration=None
 
     ):
 
@@ -222,13 +326,21 @@ class FFmpegService:
 
             "-c:a",
 
-            Config.AUDIO_CODEC,
-
-            "-shortest",
-
-            output_video
+            Config.AUDIO_CODEC
 
         ]
+
+        if duration:
+
+            # Video has already been padded to at least this length,
+            # so clamping to it never cuts the narration short.
+            command += ["-t", str(duration)]
+
+        else:
+
+            command.append("-shortest")
+
+        command.append(output_video)
 
         self._run(command)
 

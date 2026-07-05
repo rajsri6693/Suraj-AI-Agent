@@ -78,13 +78,16 @@ class VoiceService:
 
             script = script.replace(old, new)
 
+        # Remove pause-causing line breaks so the TTS engine
+        # narrates in one continuous pass instead of pausing per line
+        script = script.replace("\r", " ")
+        script = script.replace("\n", " ")
+
+        # Normalize punctuation spacing
+        script = re.sub(r"\s+([.,!?])", r"\1", script)
+
         # Remove multiple spaces
         script = re.sub(r"\s+", " ", script)
-
-        # Better pauses
-        script = script.replace(". ", ".\n")
-        script = script.replace("? ", "?\n")
-        script = script.replace("! ", "!\n")
 
         script = script.strip()
 

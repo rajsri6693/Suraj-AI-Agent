@@ -46,6 +46,8 @@ class QualityEngine:
 
         script = self.remove_markdown(script)
 
+        script = self.remove_visual_cues(script)
+
         script = self.normalize_spaces(script)
 
         script = self.fix_quotes(script)
@@ -93,6 +95,29 @@ class QualityEngine:
             text = text.replace(item, "")
 
         return text
+
+    # ==========================================================
+    # REMOVE VISUAL / SCENE CUES
+    # ==========================================================
+    #
+    # The content-writing prompt asks the AI to embed inline visual
+    # cue tags such as "[investor panic]" or "[stock market]" so a
+    # human reviewing the script in Notion knows what visual each
+    # line refers to. These tags are editorial-only - they must
+    # never be spoken by the TTS engine or burned into subtitles,
+    # so they are stripped here before the script is treated as
+    # narration.
+    # ==========================================================
+
+    def remove_visual_cues(self, text):
+
+        text = re.sub(r"\[[^\]\n]*\]", "", text)
+
+        text = re.sub(r"[ \t]+", " ", text)
+
+        text = re.sub(r"[ \t]*\n[ \t]*", "\n", text)
+
+        return text.strip()
 
     # ==========================================================
     # NORMALIZE SPACES

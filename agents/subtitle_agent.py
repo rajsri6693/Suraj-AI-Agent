@@ -32,11 +32,21 @@ class SubtitleAgent:
 
             filename,
 
-            content.script
+            content.script,
+
+            content.audio_duration
 
         )
 
         content.subtitle_path = subtitle_path
+
+        # Lock in the narration text now, before the visual planner
+        # generates any Pexels keywords - this is the baseline the
+        # keyword-leak guard compares against later.
+        content.script_snapshot = content.script
+
+        with open(subtitle_path, "r", encoding="utf-8") as f:
+            content.subtitle_snapshot = f.read()
 
         print("✅ Subtitle Generated")
 

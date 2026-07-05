@@ -27,38 +27,75 @@ class SubtitleService:
         )
 
     # ---------------------------------------
+    # Group Words Into 2-4 Word Chunks
+    # ---------------------------------------
+
+    def _group_words(self, words):
+
+        groups = []
+
+        i = 0
+
+        n = len(words)
+
+        while i < n:
+
+            remaining = n - i
+
+            if remaining <= 4:
+
+                groups.append(words[i:])
+
+                break
+
+            size = 3
+
+            # Avoid leaving a trailing single-word group
+            if remaining - size == 1:
+
+                size = 2
+
+            groups.append(words[i:i + size])
+
+            i += size
+
+        return groups
+
+    # ---------------------------------------
     # Generate Subtitle
     # ---------------------------------------
 
-    def generate(self, filename, script):
+    def generate(self, filename, script, total_duration=None):
 
-        # Split sentences
+        # Strip sentence punctuation, keep plain words only
+        clean_script = re.sub(r"[।.!?,]", " ", script.strip())
 
-        sentences = re.split(r"[।.!?]\s*", script.strip())
+        words = [w for w in clean_script.split() if w]
 
-        sentences = [
+        if not words:
+            words = []
 
-            s.strip()
+        groups = self._group_words(words)
 
-            for s in sentences
+        word_count = len(words)
 
-            if s.strip()
-
-        ]
+        if total_duration and word_count:
+            word_duration = total_duration / word_count
+        else:
+            # Fallback pacing when narration duration is unknown
+            word_duration = 1 / 2.8
 
         current_time = 0.0
 
         subtitle_lines = []
 
-        for index, sentence in enumerate(sentences, start=1):
-
-            word_count = len(sentence.split())
+        for index, group in enumerate(groups, start=1):
 
             duration = max(
 
-                2.0,
+                0.5,
 
-                word_count / 2.8
+                word_duration * len(group)
 
             )
 
@@ -70,6 +107,9 @@ class SubtitleService:
 
             )
 
+            # 2-4 words, single line - never a full sentence
+            text = " ".join(group)
+
             subtitle_lines.append(str(index))
 
             subtitle_lines.append(
@@ -78,7 +118,7 @@ class SubtitleService:
 
             )
 
-            subtitle_lines.append(sentence)
+            subtitle_lines.append(text)
 
             subtitle_lines.append("")
 
